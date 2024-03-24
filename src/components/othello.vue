@@ -3,16 +3,14 @@
     <div class="container">
       <div class="board">
         <div v-for="cell in cells" :key="cell">
-          <div v-for="stone in cells" :key="stone" class="cell" v-on="clickCell()">
-            <div v-if="stone===1" class="disc black"></div>
-            <div v-if="stone===-1" class="disc white"></div>
-            <div v-if="stone===0"></div>
+          <div v-for="disc in cell" :key="disc" class="cell" @click="clickCell(disc)">
+            <div v-if="disc===1" class="disc black"></div>
+            <div v-else-if="disc===-1" class="disc white"></div>
           </div>
         </div>
       </div>
     </div>
   </div>
-  <div><button @click="restart()"></button></div>
 </template>
 
 <script>
@@ -36,11 +34,9 @@ export default {
     }
   },
   methods: {
-    restart() {
-
-    },
-    clickCell(){
-
+    clickCell(disc){
+      console.log(disc);
+      return disc === 1;
     }
 }
 }
@@ -74,6 +70,7 @@ export default {
   border-width: thin;
   display: flex;
   justify-content: center;
+  align-items: center;
   table-layout: fixed;
   width: 50px;
   height: 48px;
