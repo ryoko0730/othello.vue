@@ -6,6 +6,7 @@
           <div v-for="disc in cell" :key="disc" class="cell" @click="clickCell(disc)">
             <div v-if="disc===1" class="disc black"></div>
             <div v-else-if="disc===-1" class="disc white"></div>
+            <div v-if="disc===0"></div>
           </div>
         </div>
       </div>
@@ -35,8 +36,24 @@ export default {
   },
   methods: {
     clickCell(disc){
+      // disc = disc || window.event;
+      // element = disc.target;
+      // let list_tr = document.getElementsByTagName("tr");
+      // let list_td = element.parentNode.childNpdes;
+      // list_tr = [].slice.call(list_tr);
+      // list_td = [].slice.call(list_td);
+      // console.log(list_tr);
+      // console.log(list_td);
+      // tr_num = list_tr.indexOf(element.parentNode);
+      // td_num = list_td.indexOf(element);
+      // console.log(tr_num);
+      // console.log(td_num);
+      // this.put(tr_num, td_num)
+      // this.$set(this.cells, disc, 1)
       console.log(disc);
-      return disc === 1;
+      this.disc = 1;
+      console.log(disc);
+      return disc
     }
 }
 }
