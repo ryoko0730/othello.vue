@@ -2,9 +2,13 @@
   <div class="othelloBoard">
     <div class="container">
       <div class="board">
-        <tr v-for="cell in cells" :key="cell">
-          <div ></div>
-        </tr>
+        <div v-for="cell in cells" :key="cell">
+          <div v-for="stone in cells" :key="stone" class="cell" v-on="clickCell()">
+            <div v-if="stone===1" class="disc black"></div>
+            <div v-if="stone===-1" class="disc white"></div>
+            <div v-if="stone===0"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -34,20 +38,23 @@ export default {
   methods: {
     restart() {
 
-}
+    },
+    clickCell(){
+
+    }
 }
 }
 </script>
 
 <style>
 .othelloBoard {
-  align-content: center;
   display: inline-block;
 }
 
 .container {
   display: flex;
   align-items: center;
+  justify-content: center;
   width: 430px;
   height: 470px;
   background: #333;
@@ -55,15 +62,18 @@ export default {
 
 .board {
   display: flex;
-  align-items: center;
   border: #333;
   border-collapse:collapse;
-  width: 408px;
-  height: 408px;
+  width: 411px;
+  height: 397px;
   background: darkgreen;
 }
 
 .cell {
+  border: solid;
+  border-width: thin;
+  display: flex;
+  justify-content: center;
   table-layout: fixed;
   width: 50px;
   height: 48px;
