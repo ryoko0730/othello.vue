@@ -64,7 +64,8 @@ export default {
       checkRow: '',
       checkArray: [],
       coordinates: [],
-      count: 0
+      count: 0,
+      turn: 1
     }
   },
   methods: {
@@ -92,6 +93,7 @@ export default {
         }
         this.turnCells(this.checkArray, this.coordinates, columnIndex, rowIndex);
       })
+      this.changeTurn();
     },
     turnCells(checkArray, coordinates, columnIndex, rowIndex) {
       const turnNumber = checkArray.indexOf(this.blackStone);
@@ -114,9 +116,9 @@ export default {
         })
       }
     },
-    changeTurn() {
+    changeTurn () {
       this.turn = 0 - this.turn;
-      if(!this.cells.some(value => value.some(v => v === 0))) {
+      if(!this.cells.some(cell => cell.some(disc => disc === 0))) {
         this.finish();
       }
       this.verification();
@@ -124,16 +126,15 @@ export default {
     checkBoardEnd(columnIndex, rowIndex){
       return 8>columnIndex && columnIndex>0 && 8>rowIndex && rowIndex>0;
     },
-    verification() {
-      let able_put = []
+    verification () {
       for (let i=0; i<8; i++) {
         for (let j=0; j<8; j++) {
-          if (this.check_put(i, j)){
-            able_put.push([i, j]);
+          if (this.checkAbleToPut(i, j)){
+            this.turnAbleCells.push([i, j]);
           }
         }
       }
-      if (able_put.length === 0){
+      if (this.turnAbleCells.length === 0){
         document.getElementById("message").innerHTML = "置ける場所がありません";
         if (this.flag_pass){
           this.finish()
@@ -143,15 +144,14 @@ export default {
         }
       } else {
         this.flag_pass = false
-        // cpuの番
         if (this.flag_vscpu === "cpu" & this.turn === this.random){
-          let random_choice = able_put[Math.floor(Math.random() * able_put.length)];
+          let random_choice = this.turnAbleCells[Math.floor(Math.random() * this.turnAbleCells.length)];
           setTimeout(this.put, 1000, random_choice[0], random_choice[1]);
         }
       }
     },
-    finish() {
-      let sum = this.cells.reduce((sum, element) => sum + element.reduce((sum2, element2) => sum2 + element2, 0), 0)
+    finish () {
+      const sum = this.cells.reduce((cellSum, cell) => cellSum + cell.reduce((discSum, disc) => discSum + disc, 0), 0)
       if (sum > 0){
         document.getElementById("message").innerHTML = "黒の勝ちです";
       } else if (sum < 0){
@@ -159,7 +159,6 @@ export default {
       } else {
         document.getElementById("message").innerHTML = "引き分けです";
       }
-      setTimeout(this.new_game, 1000);
     }
   }
 }
