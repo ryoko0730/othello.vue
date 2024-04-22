@@ -56,60 +56,63 @@ export default {
         [0,0,0,0,0,0,0,0],
         [0,0,0,0,0,0,0,0],
         [0,0,0,0,0,0,0,0]
-      ]
+      ],
+      blackStone: 1,
+      whiteStone: -1,
+      blankCell: 0,
+      checkColumn: '',
+      checkRow: '',
+      checkArray: [],
+      coordinates: [],
+      count: 0
     }
   },
   methods: {
     clickCell(columnIndex, rowIndex) {
-      if(this.cells[columnIndex][rowIndex] !== 0) {
-        return false;
-      } else {
-        const result = this.checkCell(columnIndex, rowIndex);
-        if(result == true) {
-          this.cells[columnIndex][rowIndex] = 1;
-        }
-        return this.cells
-      }
+      if(this.cells[columnIndex][rowIndex] !== this.blankCell) {
+        return
+      } 
+      this.checkCell(columnIndex, rowIndex);
     },
     restart() {
       Object.assign(this.$data, this.$options.data())
     },
     checkCell(columnIndex, rowIndex) {
       this.direction.forEach(dir => {
-        let checkColumn = columnIndex + dir[0];
-        let checkRow = rowIndex + dir[1];
+        this.checkArray.splice(0, this.checkArray.length);
+        this.coordinates.splice(0, this.coordinates.length);
+        this.checkColumn = columnIndex + dir[0];
+        this.checkRow = rowIndex + dir[1];
 
-        let blackStoneFlag = false;
-        while(this.checkBoardEnd(checkColumn, checkRow)) {
-          if(this.cells[columnIndex][rowIndex] === 0-this.turn) {
-            checkColumn += dir[0];
-            checkRow += dir[1];
-            continue;
-          } else if(this.cells[checkColumn][checkRow] === this.turn) {
-            blackStoneFlag = true;
-            console.log(blackStoneFlag);
-            break;
-          } else {
-            blackStoneFlag = false;
-            console.log(blackStoneFlag);
-            break;
-          }
+        while (this.checkBoardEnd(this.checkColumn, this.checkRow)) {
+          this.checkArray.push(this.cells[this.checkColumn][this.checkRow])
+          this.coordinates.push([this.checkColumn, this.checkRow])
+          this.checkColumn = this.checkColumn + dir[0]
+          this.checkRow = this.checkRow + dir[1]
         }
-        if(!blackStoneFlag) {
-          return;
-        }
-        checkColumn = columnIndex + dir[0];
-        checkRow = rowIndex + dir[1];
-        while(this.checkBoardEnd(checkColumn, checkRow)) {
-          if(this.cells[checkColumn][checkRow] === 0-this.turn) {
-            this.turnAbleCells[checkColumn][checkRow] = 1;
-            checkColumn += dir[0];
-            checkRow += dir[1];
-          } else {
-            break;
-          }
-        }
+        this.turnCells(this.checkArray, this.coordinates, columnIndex, rowIndex);
       })
+    },
+    turnCells(checkArray, coordinates, columnIndex, rowIndex) {
+      const turnNumber = checkArray.indexOf(this.blackStone);
+      if (turnNumber == 0 || turnNumber == -1) {
+        checkArray.splice(0, checkArray.length);
+        coordinates.splice(0, coordinates.length);
+        return
+      } else {
+        coordinates.forEach(coordinate => {
+          if (this.count == turnNumber) {
+            checkArray.splice(0, checkArray.length);
+            coordinates.splice(0, coordinates.length);
+            return
+          }
+          this.cells[columnIndex][rowIndex] = this.blackStone
+          let turnColumnIndex = coordinate[0]
+          let turnRowIndex = coordinate[1]
+          this.cells[turnColumnIndex][turnRowIndex] = this.blackStone;
+          this.count = this.count + 1;
+        })
+      }
     },
     changeTurn() {
       this.turn = 0 - this.turn;
@@ -119,7 +122,7 @@ export default {
       this.verification();
     },
     checkBoardEnd(columnIndex, rowIndex){
-      return 8>=columnIndex && columnIndex>=0 && 8>=rowIndex && rowIndex>=0;
+      return 8>columnIndex && columnIndex>0 && 8>rowIndex && rowIndex>0;
     },
     verification() {
       let able_put = []
