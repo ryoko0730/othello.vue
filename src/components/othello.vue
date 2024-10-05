@@ -62,13 +62,22 @@ export default {
       blankCell: 0,
       checkColumn: '',
       checkRow: '',
-      checkArray: [],
-      coordinates: [],
+      checkStoneColorArray: [],
+      checkStoneColorCoordinatesArray: [],
       count: 0,
       turn: 1
     }
   },
   methods: {
+    /**
+     * セルのクリック
+     * 
+     * クリックされたセルに、すでに黒い石が置かれているかを確認して、
+     * 置かれていなければ、黒い石を置きに行く。
+     * 
+     * @param columnIndex 縦の座標点
+     * @param rowIndex 横の座標点
+     */
     clickCell(columnIndex, rowIndex) {
       if(this.cells[columnIndex][rowIndex] !== this.blankCell) {
         return
@@ -78,34 +87,52 @@ export default {
     restart() {
       Object.assign(this.$data, this.$options.data())
     },
+    /**
+     * ひっくり返す石を確認
+     * 
+     * クリックされたセルの縦列・横列を見て、ひっくり返す石を確認する。
+     * 
+     * @param columnIndex 縦の座標点
+     * @param rowIndex 横の座標点
+     */
     checkCell(columnIndex, rowIndex) {
       this.direction.forEach(dir => {
-        this.checkArray.splice(0, this.checkArray.length);
-        this.coordinates.splice(0, this.coordinates.length);
+        this.checkStoneColorArray.splice(0, this.checkStoneColorArray.length);
+        this.checkStoneColorCoordinatesArray.splice(0, this.checkStoneColorCoordinatesArray.length);
         this.checkColumn = columnIndex + dir[0];
         this.checkRow = rowIndex + dir[1];
 
         while (this.checkBoardEnd(this.checkColumn, this.checkRow)) {
-          this.checkArray.push(this.cells[this.checkColumn][this.checkRow])
-          this.coordinates.push([this.checkColumn, this.checkRow])
+          this.checkStoneColorArray.push(this.cells[this.checkColumn][this.checkRow])
+          this.checkStoneColorCoordinatesArray.push([this.checkColumn, this.checkRow])
           this.checkColumn = this.checkColumn + dir[0]
           this.checkRow = this.checkRow + dir[1]
         }
-        this.turnCells(this.checkArray, this.coordinates, columnIndex, rowIndex);
+        this.turnCells(this.checkStoneColorArray, this.checkStoneColorCoordinatesArray, columnIndex, rowIndex);
       })
       this.changeTurn();
     },
-    turnCells(checkArray, coordinates, columnIndex, rowIndex) {
-      const turnNumber = checkArray.indexOf(this.blackStone);
+    /**
+     * セルに置かれた石をひっくり返す
+     * クリックされたセルをスタートに1列分のセルの中身を受け取り
+     * 一番最初に黒い石が置かれた箇所までひっくり返す。
+     * 
+     * @param checkStoneColorArray 1列分のセルの中身
+     * @param checkStoneColorCoordinatesArray 1列分のセルの座標
+     * @param columnIndex 縦の座標点
+     * @param rowIndex 横の座標点
+     */
+    turnCells(checkStoneColorArray, checkStoneColorCoordinatesArray, columnIndex, rowIndex) {
+      const turnNumber = checkStoneColorArray.indexOf(this.blackStone);
       if (turnNumber == 0 || turnNumber == -1) {
-        checkArray.splice(0, checkArray.length);
-        coordinates.splice(0, coordinates.length);
+        checkStoneColorArray.splice(0, checkStoneColorArray.length);
+        checkStoneColorCoordinatesArray.splice(0, checkStoneColorCoordinatesArray.length);
         return
       } else {
-        coordinates.forEach(coordinate => {
+        checkStoneColorCoordinatesArray.forEach(coordinate => {
           if (this.count == turnNumber) {
-            checkArray.splice(0, checkArray.length);
-            coordinates.splice(0, coordinates.length);
+            checkStoneColorArray.splice(0, checkStoneColorArray.length);
+            checkStoneColorCoordinatesArray.splice(0, checkStoneColorCoordinatesArray.length);
             return
           }
           this.cells[columnIndex][rowIndex] = this.blackStone
@@ -116,6 +143,12 @@ export default {
         })
       }
     },
+    /**
+     * 選手交代をする
+     * CPUモードの時はCPUがセルを置く処理を動かし、
+     * 対戦モードの時は置く石の色を切り替える。
+     * 
+     */
     changeTurn () {
       this.turn = 0 - this.turn;
       if(!this.cells.some(cell => cell.some(disc => disc === 0))) {
@@ -123,9 +156,20 @@ export default {
       }
       this.verification();
     },
+    /**
+     * ボード上のセルの位置を確認する
+     * 9×9のマス上にあればtrueを、そうでなければfalseを返す。
+     * 
+     * @param columnIndex 縦の座標点
+     * @param rowIndex 横の座標点
+     */
     checkBoardEnd(columnIndex, rowIndex){
-      return 8>columnIndex && columnIndex>0 && 8>rowIndex && rowIndex>0;
+      return (8 > columnIndex && columnIndex > 0) && (8 > rowIndex && rowIndex > 0);
     },
+    /**
+     * ボード上に石を置けるセルがあるか確認する
+     * また、すべてのセルに石が置かれていた場合は、ゲームエンドとする。
+     */
     verification () {
       for (let i=0; i<8; i++) {
         for (let j=0; j<8; j++) {
@@ -149,6 +193,9 @@ export default {
           setTimeout(this.put, 1000, random_choice[0], random_choice[1]);
         }
       }
+    },
+    checkAbleToPut() {
+
     },
     finish () {
       const sum = this.cells.reduce((cellSum, cell) => cellSum + cell.reduce((discSum, disc) => discSum + disc, 0), 0)
