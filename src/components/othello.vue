@@ -16,7 +16,7 @@
     <button @click="restart()">
       restart
     </button>
-    <button @click="path()">
+    <button @click="pass()">
       パス
     </button>
   </div>
@@ -50,16 +50,7 @@ export default {
         [-1, 1],
         [-1, 0]
       ],
-      turnAbleCells: [
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0]
-      ],
+      turnAbleCells: [],
       blackStone: 1,
       whiteStone: -1,
       blankCell: 0,
@@ -68,7 +59,9 @@ export default {
       checkStoneColorArray: [],
       checkStoneColorCoordinatesArray: [],
       count: 0,
-      turn: 1
+      turn: 1,
+      passFlg: false,
+      passCount: 0
     }
   },
   methods: {
@@ -99,7 +92,7 @@ export default {
     /**
      * パスする
      */
-    path() {
+    pass() {
 
     },
 
@@ -173,7 +166,6 @@ export default {
         this.finish();
       }
       this.cpu();
-      this.verification();
     },
 
     /**
@@ -181,6 +173,7 @@ export default {
      */
     cpu(){
       this.verification();
+
     },
 
     /**
@@ -199,27 +192,24 @@ export default {
      * すべてのマスに石が置かれていた場合は、ゲームを終了する。
      */
     verification () {
-      for (let i=0; i<8; i++) {
-        for (let j=0; j<8; j++) {
-          if (this.checkAbleToPut(i, j)){
-            this.turnAbleCells.push([i, j]);
-            console.log('置けるマス' + this.turnCells);
+      for (let columnIndex=0; columnIndex<8; columnIndex++) {
+        for (let rowIndex=0; rowIndex<8; rowIndex++) {
+          if (this.checkAbleToPut(columnIndex, rowIndex)){
+            this.turnAbleCells.push([columnIndex, rowIndex]);
           }
         }
       }
-      if (this.turnAbleCells.length === 0){
+      if (this.turnAbleCells.length < 1){
         document.getElementById("message").innerHTML = "置ける場所がありません";
-        if (this.flag_pass){
+        if (this.passFlg){
           this.finish()
         } else {
-        this.flag_pass = true
-        this.change_turn()
-        }
-      } else {
-        this.flag_pass = false
-        if (this.flag_vscpu === "cpu" & this.turn === this.random){
-          let random_choice = this.turnAbleCells[Math.floor(Math.random() * this.turnAbleCells.length)];
-          setTimeout(this.put, 1000, random_choice[0], random_choice[1]);
+          this.passCount ++;
+          // パスは3回まで
+          if (this.passCount == 3) {
+            this.passFlg = true
+          }
+          this.changeTurn()
         }
       }
     },
@@ -234,29 +224,27 @@ export default {
     checkAbleToPut(columnIndex, rowIndex) {
       // スタートマスが空でない場合は置けないので早期リターン
       if (this.cells[columnIndex][rowIndex] !== this.blankCell) {
-        return false
+        return false;
       }
-      this.direction.forEach(dir => {
+      var canPlace = this.direction.some(dir => {
       this.checkColumn = columnIndex + dir[0];
       this.checkRow = rowIndex + dir[1];
       while (this.checkBoardEnd(this.checkColumn, this.checkRow)) {
         // チェック方向の1つ目のマスが相手の石でない場合はひっくりかえせないのでリターン
         if (this.cells[this.checkColumn][this.checkRow] !== this.whiteStone) {
-          return false
+          return false;
         }
         this.checkColumn = this.checkColumn + dir[0]
         this.checkRow = this.checkRow + dir[1]
         switch (this.cells[this.checkColumn][this.checkRow]) {
           case this.blankCell:
-            return false
+            return false;
           case this.blackStone:
-            return true
-          case this.whiteStone:
-            continue
+            return true;
         }
       }
       })
-      return false
+      return canPlace;
     },
 
     /**
