@@ -16,6 +16,9 @@
     <button @click="restart()">
       restart
     </button>
+    <button @click="path()">
+      パス
+    </button>
   </div>
 </template>
 
@@ -94,6 +97,13 @@ export default {
     },
 
     /**
+     * パスする
+     */
+    path() {
+
+    },
+
+    /**
      * ひっくり返す石を確認
      * 
      * クリックされたマスの縦列・横列を見て、ひっくり返す石を確認する。
@@ -162,6 +172,14 @@ export default {
       if(!this.cells.some(cell => cell.some(disc => disc === 0))) {
         this.finish();
       }
+      this.cpu();
+      this.verification();
+    },
+
+    /**
+     * CPUの操作
+     */
+    cpu(){
       this.verification();
     },
 
@@ -178,13 +196,14 @@ export default {
 
     /**
      * ボード上に石を置けるマスがあるか確認する
-     * また、すべてのマスに石が置かれていた場合は、ゲームを終了する。
+     * すべてのマスに石が置かれていた場合は、ゲームを終了する。
      */
     verification () {
       for (let i=0; i<8; i++) {
         for (let j=0; j<8; j++) {
           if (this.checkAbleToPut(i, j)){
             this.turnAbleCells.push([i, j]);
+            console.log('置けるマス' + this.turnCells);
           }
         }
       }
@@ -206,14 +225,38 @@ export default {
     },
 
     /**
-     * 置けるマスがあるかどうかを判定する
+     * 置けるマスかどうかを判定する
      * 
      * @param row 列
      * @param cell マス
      * @return 置けるマス：true 置けないマス：false
      */
-    checkAbleToPut() {
-
+    checkAbleToPut(columnIndex, rowIndex) {
+      // スタートマスが空でない場合は置けないので早期リターン
+      if (this.cells[columnIndex][rowIndex] !== this.blankCell) {
+        return false
+      }
+      this.direction.forEach(dir => {
+      this.checkColumn = columnIndex + dir[0];
+      this.checkRow = rowIndex + dir[1];
+      while (this.checkBoardEnd(this.checkColumn, this.checkRow)) {
+        // チェック方向の1つ目のマスが相手の石でない場合はひっくりかえせないのでリターン
+        if (this.cells[this.checkColumn][this.checkRow] !== this.whiteStone) {
+          return false
+        }
+        this.checkColumn = this.checkColumn + dir[0]
+        this.checkRow = this.checkRow + dir[1]
+        switch (this.cells[this.checkColumn][this.checkRow]) {
+          case this.blankCell:
+            return false
+          case this.blackStone:
+            return true
+          case this.whiteStone:
+            continue
+        }
+      }
+      })
+      return false
     },
 
     /**
