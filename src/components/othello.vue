@@ -14,7 +14,7 @@
   </div>
   <div>
     <button @click="restart()">
-      restart
+      リスタート
     </button>
     <button @click="pass()">
       パス
@@ -58,10 +58,11 @@ export default {
       checkRow: '',
       checkStoneColorArray: [],
       checkStoneColorCoordinatesArray: [],
-      count: 0,
-      turn: 1,
+      myStoneColor: 1,
+      rivalStoneColor: 0,
       passFlg: false,
-      passCount: 0
+      passCount: 0,
+      cpuTurnFlg: false
     }
   },
   methods: {
@@ -90,10 +91,22 @@ export default {
     },
 
     /**
+     * 選手交代時に利用するものだけ初期値に戻す
+     */
+    resetFlg() {
+      var defaultFlg = this.$options.data();
+
+      this.cpuFlg = defaultFlg.cpuFlg;
+      this.myStoneColor = defaultFlg.myStoneColor;
+      this.rivalStoneColor = defaultFlg.rivalStoneColor;
+    },
+
+    /**
      * パスする
      */
     pass() {
-
+      this.passCount ++;
+      this.changeTurn();
     },
 
     /**
@@ -119,6 +132,7 @@ export default {
         }
         this.turnCells(this.checkStoneColorArray, this.checkStoneColorCoordinatesArray, columnIndex, rowIndex);
       })
+      this.cpuFlg = true;
       this.changeTurn();
     },
 
@@ -140,7 +154,8 @@ export default {
         return
       } else {
         checkStoneColorCoordinatesArray.forEach(coordinate => {
-          if (this.count == turnNumber) {
+          var cellCount;
+          if (cellCount == turnNumber) {
             checkStoneColorArray.splice(0, checkStoneColorArray.length);
             checkStoneColorCoordinatesArray.splice(0, checkStoneColorCoordinatesArray.length);
             return
@@ -149,7 +164,7 @@ export default {
           let turnColumnIndex = coordinate[0]
           let turnRowIndex = coordinate[1]
           this.cells[turnColumnIndex][turnRowIndex] = this.blackStone;
-          this.count = this.count + 1;
+          cellCount = cellCount + 1;
         })
       }
     },
@@ -161,11 +176,20 @@ export default {
      * 
      */
     changeTurn () {
-      this.turn = 0 - this.turn;
-      if(!this.cells.some(cell => cell.some(disc => disc === 0))) {
-        this.finish();
+      if (this.cpuFlg) {
+        this.changeFlg;
+        this.cpu();
+        this.resetFlg();
       }
-      this.cpu();
+    },
+
+    /**
+     * フラグを切り替えて選手交代をする
+     */
+    changeFlg() {
+      this.cpuFlg = false;
+      this.myStoneColor = this.whiteStone;
+      this.rivalStoneColor = this.blackStone;
     },
 
     /**
@@ -173,7 +197,7 @@ export default {
      */
     cpu(){
       this.verification();
-
+      // ひっくりかえせる数が最も多いものを選んで石を置く
     },
 
     /**
@@ -209,9 +233,9 @@ export default {
           if (this.passCount == 3) {
             this.passFlg = true
           }
-          this.changeTurn()
         }
       }
+      this.changeTurn()
     },
 
     /**
@@ -231,7 +255,7 @@ export default {
       this.checkRow = rowIndex + dir[1];
       while (this.checkBoardEnd(this.checkColumn, this.checkRow)) {
         // チェック方向の1つ目のマスが相手の石でない場合はひっくりかえせないのでリターン
-        if (this.cells[this.checkColumn][this.checkRow] !== this.whiteStone) {
+        if (this.cells[this.checkColumn][this.checkRow] !== this.rivalStoneColor) {
           return false;
         }
         this.checkColumn = this.checkColumn + dir[0]
