@@ -70,10 +70,10 @@ export default {
   },
   methods: {
     /**
-     * セルのクリック
+     * マスのクリック
      * 
-     * クリックされたセルに、すでに黒い石が置かれているかを確認して、
-     * 置かれていなければ、黒い石を置きに行く。
+     * クリックされたマスに、すでに黒い石が置かれているかを確認して、
+     * 置かれていなければ、黒い石を置く。
      * 
      * @param columnIndex 縦の座標点
      * @param rowIndex 横の座標点
@@ -84,13 +84,19 @@ export default {
       } 
       this.checkCell(columnIndex, rowIndex);
     },
+
+    /**
+     * 試合を最初から始める
+     * 全ての石をリセットして初期配置に戻す
+     */
     restart() {
       Object.assign(this.$data, this.$options.data())
     },
+
     /**
      * ひっくり返す石を確認
      * 
-     * クリックされたセルの縦列・横列を見て、ひっくり返す石を確認する。
+     * クリックされたマスの縦列・横列を見て、ひっくり返す石を確認する。
      * 
      * @param columnIndex 縦の座標点
      * @param rowIndex 横の座標点
@@ -112,13 +118,14 @@ export default {
       })
       this.changeTurn();
     },
+
     /**
-     * セルに置かれた石をひっくり返す
-     * クリックされたセルをスタートに1列分のセルの中身を受け取り
+     * マスに置かれた石をひっくり返す
+     * クリックされたマスをスタートに1列分のマスの中身を受け取り
      * 一番最初に黒い石が置かれた箇所までひっくり返す。
      * 
-     * @param checkStoneColorArray 1列分のセルの中身
-     * @param checkStoneColorCoordinatesArray 1列分のセルの座標
+     * @param checkStoneColorArray 1列分のマスの中身
+     * @param checkStoneColorCoordinatesArray 1列分のマスの座標
      * @param columnIndex 縦の座標点
      * @param rowIndex 横の座標点
      */
@@ -143,9 +150,10 @@ export default {
         })
       }
     },
+
     /**
      * 選手交代をする
-     * CPUモードの時はCPUがセルを置く処理を動かし、
+     * CPUモードの時はCPUがマスを置く処理を動かし、
      * 対戦モードの時は置く石の色を切り替える。
      * 
      */
@@ -156,8 +164,9 @@ export default {
       }
       this.verification();
     },
+
     /**
-     * ボード上のセルの位置を確認する
+     * ボード上のマスの位置を確認する
      * 9×9のマス上にあればtrueを、そうでなければfalseを返す。
      * 
      * @param columnIndex 縦の座標点
@@ -166,9 +175,10 @@ export default {
     checkBoardEnd(columnIndex, rowIndex){
       return (8 > columnIndex && columnIndex > 0) && (8 > rowIndex && rowIndex > 0);
     },
+
     /**
-     * ボード上に石を置けるセルがあるか確認する
-     * また、すべてのセルに石が置かれていた場合は、ゲームエンドとする。
+     * ボード上に石を置けるマスがあるか確認する
+     * また、すべてのマスに石が置かれていた場合は、ゲームを終了する。
      */
     verification () {
       for (let i=0; i<8; i++) {
@@ -194,9 +204,21 @@ export default {
         }
       }
     },
+
+    /**
+     * 置けるマスがあるかどうかを判定する
+     * 
+     * @param row 列
+     * @param cell マス
+     * @return 置けるマス：true 置けないマス：false
+     */
     checkAbleToPut() {
 
     },
+
+    /**
+     * ゲーム終了時点の石の数を数え、勝敗を通知する。
+     */
     finish () {
       const sum = this.cells.reduce((cellSum, cell) => cellSum + cell.reduce((discSum, disc) => discSum + disc, 0), 0)
       if (sum > 0){
