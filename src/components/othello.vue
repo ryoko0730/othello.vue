@@ -153,12 +153,12 @@ export default {
         checkStoneColorCoordinatesArray.splice(0, checkStoneColorCoordinatesArray.length);
         return
       } else {
-        checkStoneColorCoordinatesArray.forEach(coordinate => {
-          var cellCount;
+        let cellCount = 0;
+        checkStoneColorCoordinatesArray.some(coordinate => {
           if (cellCount == turnNumber) {
             checkStoneColorArray.splice(0, checkStoneColorArray.length);
             checkStoneColorCoordinatesArray.splice(0, checkStoneColorCoordinatesArray.length);
-            return
+            return false;
           }
           this.cells[columnIndex][rowIndex] = this.blackStone
           let turnColumnIndex = coordinate[0]
@@ -177,7 +177,7 @@ export default {
      */
     changeTurn () {
       if (this.cpuFlg) {
-        this.changeFlg;
+        this.changeFlg();
         this.cpu();
         this.resetFlg();
       }
