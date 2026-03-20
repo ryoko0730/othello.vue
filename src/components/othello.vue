@@ -133,6 +133,7 @@ export default {
         }
         this.turnCells(this.checkStoneColorArray, this.checkStoneColorCoordinatesArray, columnIndex, rowIndex);
       })
+      this.passCount = 0; // 石を置いたのでパス回数をリセット
       this.changeTurn();
     },
 
@@ -187,12 +188,37 @@ export default {
       this.myStoneColor = nextStoneColor;
       this.rivalStoneColor = nextRivalColor;
 
+      // 次のプレイヤーが置ける場所があるか確認
+      if (!this.hasAnyMove()) {
+        if (this.passCount >= 1) {
+          // 両者置けないので終了
+          this.finish();
+          return;
+        } else {
+          // 置ける場所がないので自動でパス
+          this.pass();
+          return;
+        }
+      }
+
       // CPUなら実行
       if (this.myStoneColor === this.whiteStone) {
         setTimeout(() => {
           this.cpu();
         }, 500); // 少し待ってから打つ
       }
+    },
+
+    /**
+     * 現在のプレイヤーが置ける場所が1つでもあるか確認する
+     */
+    hasAnyMove() {
+      for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+          if (this.checkAbleToPut(i, j)) return true;
+        }
+      }
+      return false;
     },
 
     /**
@@ -300,7 +326,6 @@ export default {
         }
       }
       if (this.turnAbleCells.length < 1){
-        document.getElementById("message").innerHTML = "置ける場所がありません";
         if (this.passFlg){
           this.finish()
         } else {
@@ -358,14 +383,25 @@ export default {
      * ゲーム終了時点の石の数を数え、勝敗を通知する。
      */
     finish () {
-      const sum = this.cells.reduce((cellSum, cell) => cellSum + cell.reduce((discSum, disc) => discSum + disc, 0), 0)
-      if (sum > 0){
-        document.getElementById("message").innerHTML = "黒の勝ちです";
-      } else if (sum < 0){
-        document.getElementById("message").innerHTML = "白の勝ちです";
+      let blackCount = 0;
+      let whiteCount = 0;
+      this.cells.forEach(row => {
+        row.forEach(cell => {
+          if (cell === this.blackStone) blackCount++;
+          if (cell === this.whiteStone) whiteCount++;
+        });
+      });
+
+      let resultMessage = "";
+      if (blackCount > whiteCount) {
+        resultMessage = `You Win! (黒: ${blackCount}, 白: ${whiteCount})`;
+      } else if (blackCount < whiteCount) {
+        resultMessage = `You Lose... (黒: ${blackCount}, 白: ${whiteCount})`;
       } else {
-        document.getElementById("message").innerHTML = "引き分けです";
+        resultMessage = `Draw! (黒: ${blackCount}, 白: ${whiteCount})`;
       }
+
+      alert(resultMessage);
     }
   }
 }
