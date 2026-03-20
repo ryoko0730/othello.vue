@@ -1,6 +1,6 @@
 # othello.vue
 ## 画面イメージ
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/3769886/7170931a-6b9a-a43a-18e0-791aad164e23.png)
+<img width="1920" height="1200" alt="image" src="https://github.com/user-attachments/assets/da8042ac-4c77-410e-a73a-c74d6fa77f29" />
 
 ## Project setup
 ```
