@@ -1,4 +1,5 @@
 <template>
+  <!-- eslint-disable-next-line vue/multi-word-component-names -->
   <div class="game-container">
     <h1 class="game-title">Othello Game</h1>
     <div class="othelloBoard">

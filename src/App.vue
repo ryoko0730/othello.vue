@@ -1,16 +1,9 @@
 <template>
-  <othello msg="Welcome to Your Vue.js App"/>
+  <OthelloGame />
 </template>
 
-<script>
-import othello from './components/othello.vue'
-
-export default {
-  name: 'App',
-  components: {
-    othello
-  }
-}
+<script setup>
+import OthelloGame from './components/OthelloGame.vue'
 </script>
 
 <style>
