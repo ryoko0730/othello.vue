@@ -76,7 +76,8 @@ export default {
      * @param rowIndex 横の座標点
      */
     clickCell(columnIndex, rowIndex) {
-      if(this.cells[columnIndex][rowIndex] !== this.blankCell) {
+      // 置こうとしている場所が空いていない場合、または相手の石をひっくり返せない場合は配置不可
+      if(!this.checkAbleToPut(columnIndex, rowIndex)) {
         return
       } 
       this.checkCell(columnIndex, rowIndex);
@@ -147,8 +148,14 @@ export default {
      * @param rowIndex 横の座標点
      */
     turnCells(checkStoneColorArray, checkStoneColorCoordinatesArray, columnIndex, rowIndex) {
+      // 自分の石（黒）が現れるまでの位置を探す
       const turnNumber = checkStoneColorArray.indexOf(this.blackStone);
-      if (turnNumber == 0 || turnNumber == -1) {
+      
+      // 1. 自分の石が見つからない(-1)
+      // 2. すぐ隣が自分の石(0)
+      // 3. 自分の石が見つかる前に空マス(0)がある
+      const emptyCellIndex = checkStoneColorArray.indexOf(this.blankCell);
+      if (turnNumber <= 0 || (emptyCellIndex !== -1 && emptyCellIndex < turnNumber)) {
         checkStoneColorArray.splice(0, checkStoneColorArray.length);
         checkStoneColorCoordinatesArray.splice(0, checkStoneColorCoordinatesArray.length);
         return
@@ -156,9 +163,7 @@ export default {
         let cellCount = 0;
         checkStoneColorCoordinatesArray.some(coordinate => {
           if (cellCount == turnNumber) {
-            checkStoneColorArray.splice(0, checkStoneColorArray.length);
-            checkStoneColorCoordinatesArray.splice(0, checkStoneColorCoordinatesArray.length);
-            return false;
+            return true;
           }
           this.cells[columnIndex][rowIndex] = this.blackStone
           let turnColumnIndex = coordinate[0]
@@ -198,6 +203,7 @@ export default {
     cpu(){
       this.verification();
       // ひっくりかえせる数が最も多いものを選んで石を置く
+      console.log(this.turnAbleCells);
     },
 
     /**
@@ -208,7 +214,7 @@ export default {
      * @param rowIndex 横の座標点
      */
     checkBoardEnd(columnIndex, rowIndex){
-      return (8 > columnIndex && columnIndex > 0) && (8 > rowIndex && rowIndex > 0);
+      return (columnIndex >= 0 && columnIndex < 8) && (rowIndex >= 0 && rowIndex < 8);
     },
 
     /**
@@ -246,29 +252,36 @@ export default {
      * @return 置けるマス：true 置けないマス：false
      */
     checkAbleToPut(columnIndex, rowIndex) {
-      // スタートマスが空でない場合は置けないので早期リターン
+      // スタートマスが空でない場合は配置不可
       if (this.cells[columnIndex][rowIndex] !== this.blankCell) {
         return false;
       }
-      var canPlace = this.direction.some(dir => {
-      this.checkColumn = columnIndex + dir[0];
-      this.checkRow = rowIndex + dir[1];
-      while (this.checkBoardEnd(this.checkColumn, this.checkRow)) {
-        // チェック方向の1つ目のマスが相手の石でない場合はひっくりかえせないのでリターン
-        if (this.cells[this.checkColumn][this.checkRow] !== this.rivalStoneColor) {
+
+      // 8方向のうち、どこか1方向でもひっくり返せれば配置可能
+      return this.direction.some(dir => {
+        let col = columnIndex + dir[0];
+        let row = rowIndex + dir[1];
+        
+        // 1つ隣が相手の石ではない場合その方向には配置不可
+        if (!this.checkBoardEnd(col, row) || this.cells[col][row] !== this.whiteStone) {
           return false;
         }
-        this.checkColumn = this.checkColumn + dir[0]
-        this.checkRow = this.checkRow + dir[1]
-        switch (this.cells[this.checkColumn][this.checkRow]) {
-          case this.blankCell:
-            return false;
-          case this.blackStone:
-            return true;
+
+        // さらにその先を見ていく
+        col += dir[0];
+        row += dir[1];
+        while (this.checkBoardEnd(col, row)) {
+          if (this.cells[col][row] === this.blackStone) {
+            return true; // 自分の石が1つでもあれば配置可能
+          } else if (this.cells[col][row] === this.blankCell) {
+            return false; // 空マスの場合は配置不可
+          }
+          // 相手の石なら配置判定を継続
+          col += dir[0];
+          row += dir[1];
         }
-      }
-      })
-      return canPlace;
+        return false;
+      });
     },
 
     /**
