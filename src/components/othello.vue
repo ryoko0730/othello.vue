@@ -59,7 +59,7 @@ export default {
       checkStoneColorArray: [],
       checkStoneColorCoordinatesArray: [],
       myStoneColor: 1,
-      rivalStoneColor: 0,
+      rivalStoneColor: -1,
       passFlg: false,
       passCount: 0,
       cpuTurnFlg: false
@@ -133,7 +133,6 @@ export default {
         }
         this.turnCells(this.checkStoneColorArray, this.checkStoneColorCoordinatesArray, columnIndex, rowIndex);
       })
-      this.cpuFlg = true;
       this.changeTurn();
     },
 
@@ -148,8 +147,8 @@ export default {
      * @param rowIndex 横の座標点
      */
     turnCells(checkStoneColorArray, checkStoneColorCoordinatesArray, columnIndex, rowIndex) {
-      // 自分の石（黒）が現れるまでの位置を探す
-      const turnNumber = checkStoneColorArray.indexOf(this.blackStone);
+      // 自分の石が現れるまでの位置を探す
+      const turnNumber = checkStoneColorArray.indexOf(this.myStoneColor);
       
       // 1. 自分の石が見つからない(-1)
       // 2. すぐ隣が自分の石(0)
@@ -165,10 +164,10 @@ export default {
           if (cellCount == turnNumber) {
             return true;
           }
-          this.cells[columnIndex][rowIndex] = this.blackStone
+          this.cells[columnIndex][rowIndex] = this.myStoneColor
           let turnColumnIndex = coordinate[0]
           let turnRowIndex = coordinate[1]
-          this.cells[turnColumnIndex][turnRowIndex] = this.blackStone;
+          this.cells[turnColumnIndex][turnRowIndex] = this.myStoneColor;
           cellCount = cellCount + 1;
         })
       }
@@ -181,10 +180,18 @@ export default {
      * 
      */
     changeTurn () {
-      if (this.cpuFlg) {
-        this.changeFlg();
-        this.cpu();
-        this.resetFlg();
+      // 石の色を交代
+      const nextStoneColor = this.myStoneColor === this.blackStone ? this.whiteStone : this.blackStone;
+      const nextRivalColor = this.myStoneColor === this.blackStone ? this.blackStone : this.whiteStone;
+      
+      this.myStoneColor = nextStoneColor;
+      this.rivalStoneColor = nextRivalColor;
+
+      // CPUなら実行
+      if (this.myStoneColor === this.whiteStone) {
+        setTimeout(() => {
+          this.cpu();
+        }, 500); // 少し待ってから打つ
       }
     },
 
@@ -201,9 +208,72 @@ export default {
      * CPUの操作
      */
     cpu(){
-      this.verification();
-      // ひっくりかえせる数が最も多いものを選んで石を置く
-      console.log(this.turnAbleCells);
+      this.turnAbleCells = [];
+      let maxFlipped = 0;
+      let bestMoves = [];
+
+      for (let columnIndex=0; columnIndex<8; columnIndex++) {
+        for (let rowIndex=0; rowIndex<8; rowIndex++) {
+          const flippedCount = this.countFlippable(columnIndex, rowIndex);
+          if (flippedCount > 0) {
+            if (flippedCount > maxFlipped) {
+              maxFlipped = flippedCount;
+              bestMoves = [[columnIndex, rowIndex]];
+            } else if (flippedCount === maxFlipped) {
+              bestMoves.push([columnIndex, rowIndex]);
+            }
+          }
+        }
+      }
+
+      if (bestMoves.length > 0) {
+        // 最も多くひっくり返せる場所の中からランダムに選ぶ
+        const index = Math.floor(Math.random() * bestMoves.length);
+        const [col, row] = bestMoves[index];
+        this.checkCell(col, row);
+      } else {
+        // 置ける場所がないならパス
+        this.pass();
+      }
+    },
+
+    /**
+     * 指定したマスに置いたときにひっくり返せる石の総数を数える
+     * 
+     * @param columnIndex 縦の座標点
+     * @param rowIndex 横の座標点
+     * @return ひっくり返せる数
+     */
+    countFlippable(columnIndex, rowIndex) {
+      if (this.cells[columnIndex][rowIndex] !== this.blankCell) {
+        return 0;
+      }
+
+      let totalFlipped = 0;
+      this.direction.forEach(dir => {
+        let col = columnIndex + dir[0];
+        let row = rowIndex + dir[1];
+        let flippedInDir = 0;
+
+        // 1つ隣が相手の石でないならその方向は置けない
+        if (!this.checkBoardEnd(col, row) || this.cells[col][row] !== this.rivalStoneColor) {
+          return;
+        }
+
+        while (this.checkBoardEnd(col, row)) {
+          if (this.cells[col][row] === this.myStoneColor) {
+            totalFlipped += flippedInDir;
+            return;
+          } else if (this.cells[col][row] === this.blankCell) {
+            return;
+          }
+          // 相手の石ならカウントして先へ
+          flippedInDir++;
+          col += dir[0];
+          row += dir[1];
+        }
+      });
+      return totalFlipped;
     },
 
     /**
@@ -263,7 +333,7 @@ export default {
         let row = rowIndex + dir[1];
         
         // 1つ隣が相手の石ではない場合その方向には配置不可
-        if (!this.checkBoardEnd(col, row) || this.cells[col][row] !== this.whiteStone) {
+        if (!this.checkBoardEnd(col, row) || this.cells[col][row] !== this.rivalStoneColor) {
           return false;
         }
 
@@ -271,7 +341,7 @@ export default {
         col += dir[0];
         row += dir[1];
         while (this.checkBoardEnd(col, row)) {
-          if (this.cells[col][row] === this.blackStone) {
+          if (this.cells[col][row] === this.myStoneColor) {
             return true; // 自分の石が1つでもあれば配置可能
           } else if (this.cells[col][row] === this.blankCell) {
             return false; // 空マスの場合は配置不可
