@@ -1,24 +1,41 @@
 <template>
-  <div class="othelloBoard">
-    <div class="container">
-      <div class="board">
-        <div v-for="(cell, columnIndex) in cells" :key="columnIndex">
-          <div v-for="(disc, rowIndex) in cell" :key="rowIndex" class="cell" @click="clickCell(columnIndex, rowIndex)">
-            <div v-if="disc===1" class="disc black" ></div>
-            <div v-else-if="disc===-1" class="disc white"></div>
-            <div v-if="disc===0" class="disc none"></div>
+  <div class="game-container">
+    <h1 class="game-title">Othello Game</h1>
+    <div class="othelloBoard">
+      <div class="container">
+        <div class="board">
+          <div v-for="(cell, columnIndex) in cells" :key="columnIndex">
+            <div v-for="(disc, rowIndex) in cell" :key="rowIndex" class="cell" @click="clickCell(columnIndex, rowIndex)">
+              <div v-if="disc===1" class="disc black" ></div>
+              <div v-else-if="disc===-1" class="disc white"></div>
+              <div v-if="disc===0" class="disc none"></div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-  <div>
-    <button @click="restart()">
-      リスタート
-    </button>
-    <button @click="pass()">
-      パス
-    </button>
+    
+    <div class="control-panel">
+      <button class="control-btn" @click="restart()">
+        リスタート
+      </button>
+      <button class="control-btn" @click="pass()">
+        パス
+      </button>
+    </div>
+
+    <div class="message-area">
+      {{ gameMessage }}
+    </div>
+
+    <!-- 結果表示用ダイアログ -->
+    <div v-if="showResultModal" class="modal-overlay" @click="showResultModal = false">
+      <div class="modal-content" @click.stop>
+        <h2>Game Results</h2>
+        <p class="result-text">{{ resultText }}</p>
+        <button class="modal-close-btn" @click="restart()">もう一度遊ぶ</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -62,7 +79,10 @@ export default {
       rivalStoneColor: -1,
       passFlg: false,
       passCount: 0,
-      cpuTurnFlg: false
+      cpuTurnFlg: false,
+      gameMessage: '',
+      showResultModal: false,
+      resultText: ''
     }
   },
   methods: {
@@ -106,8 +126,12 @@ export default {
      * パスする
      */
     pass() {
+      const player = this.myStoneColor === this.blackStone ? "あなた" : "CPU";
+      this.gameMessage = `${player}は置ける場所がないため、スキップします。`;
       this.passCount ++;
-      this.changeTurn();
+      setTimeout(() => {
+        this.changeTurn();
+      }, 1000); // 1秒表示してから交代
     },
 
     /**
@@ -119,6 +143,7 @@ export default {
      * @param rowIndex 横の座標点
      */
     checkCell(columnIndex, rowIndex) {
+      this.gameMessage = ""; // メッセージをクリア
       this.direction.forEach(dir => {
         this.checkStoneColorArray.splice(0, this.checkStoneColorArray.length);
         this.checkStoneColorCoordinatesArray.splice(0, this.checkStoneColorCoordinatesArray.length);
@@ -188,11 +213,23 @@ export default {
       this.myStoneColor = nextStoneColor;
       this.rivalStoneColor = nextRivalColor;
 
+      // 盤面に空きがあるか確認
+      const hasEmptyCell = this.cells.some(row => row.includes(this.blankCell));
+      if (!hasEmptyCell) {
+        // 全てのマスが埋まっていれば終了
+        setTimeout(() => {
+          this.finish();
+        }, 100);
+        return;
+      }
+
       // 次のプレイヤーが置ける場所があるか確認
       if (!this.hasAnyMove()) {
         if (this.passCount >= 1) {
           // 両者置けないので終了
-          this.finish();
+          setTimeout(() => {
+            this.finish();
+          }, 100);
           return;
         } else {
           // 置ける場所がないので自動でパス
@@ -392,66 +429,193 @@ export default {
         });
       });
 
-      let resultMessage = "";
       if (blackCount > whiteCount) {
-        resultMessage = `You Win! (黒: ${blackCount}, 白: ${whiteCount})`;
+        this.resultText = `You Win! (黒: ${blackCount}, 白: ${whiteCount})`;
       } else if (blackCount < whiteCount) {
-        resultMessage = `You Lose... (黒: ${blackCount}, 白: ${whiteCount})`;
+        this.resultText = `You Lose... (黒: ${blackCount}, 白: ${whiteCount})`;
       } else {
-        resultMessage = `Draw! (黒: ${blackCount}, 白: ${whiteCount})`;
+        this.resultText = `Draw! (黒: ${blackCount}, 白: ${whiteCount})`;
       }
 
-      alert(resultMessage);
+      this.showResultModal = true;
     }
   }
 }
 </script>
 
 <style>
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  padding: 10px;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f5f5f5;
+  box-sizing: border-box;
+}
+
+.game-title {
+  margin: 10px 0 15px 0;
+  color: #2c3e50;
+  font-size: 1.8em;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
 .othelloBoard {
   display: inline-block;
+  padding: 10px;
+  background: #2c3e50;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  margin-bottom: 15px;
+}
+
+.control-panel {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.control-btn {
+  padding: 8px 16px;
+  font-size: 0.9em;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  background-color: #2c3e50;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.control-btn:hover {
+  background-color: #3e5871;
+  transform: translateY(-2px);
+}
+
+.control-btn:active {
+  transform: translateY(0);
 }
 
 .container {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 430px;
-  height: 470px;
-  background: #333;
 }
 
 .board {
   display: flex;
-  border: #333;
-  border-collapse:collapse;
-  width: 411px;
-  height: 397px;
-  background: darkgreen;
+  flex-direction: row;
+  background: #1e5631;
+  border: 4px solid #1e5631;
+  border-radius: 4px;
 }
 
 .cell {
-  border: solid;
-  border-width: thin;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: center;
   align-items: center;
-  table-layout: fixed;
-  width: 50px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cell:hover {
+  background: rgba(255, 255, 255, 0.1); /* マウスホバーで少し明るく */
 }
 
 .disc {
   width: 85%;
   height: 85%;
   border-radius: 50%;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+  animation: appear 0.3s ease-out;
+}
+
+@keyframes appear {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .white {
-  background: #eee;
+  background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
 }
 
 .black {
-  background: #333;
+  background: radial-gradient(circle at 30% 30%, #444, #111);
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+}
+
+.none {
+  background: transparent;
+}
+
+.message-area {
+  margin-top: 10px;
+  height: 24px;
+  color: #d32f2f;
+  font-weight: bold;
+}
+
+/* モーダルのスタイル */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  min-width: 300px;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  color: #333;
+}
+
+.result-text {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 20px 0;
+  color: #2c3e50;
+}
+
+.modal-close-btn {
+  background: #42b983;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background 0.3s;
+}
+
+.modal-close-btn:hover {
+  background: #369b6e;
 }
 </style>
