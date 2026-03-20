@@ -58,6 +58,18 @@ const resultText = ref('');
 // --- 算出プロパティ（Computed） ---
 const hasEmptyCell = computed(() => cells.value.some(row => row.includes(EMPTY)));
 
+// --- 重み付けテーブル（マスの価値） ---
+const WEIGHT_TABLE = [
+  [100, -40,  20,   5,   5,  20, -40, 100],
+  [-40, -80,  -1,  -1,  -1,  -1, -80, -40],
+  [ 20,  -1,   5,   1,   1,   5,  -1,  20],
+  [  5,  -1,   1,   0,   0,   1,  -1,   5],
+  [  5,  -1,   1,   0,   0,   1,  -1,   5],
+  [ 20,  -1,   5,   1,   1,   5,  -1,  20],
+  [-40, -80,  -1,  -1,  -1,  -1, -80, -40],
+  [100, -40,  20,   5,   5,  20, -40, 100]
+];
+
 // --- 関数（Methods） ---
 
 function createInitialBoard() {
@@ -147,17 +159,23 @@ function handlePass() {
 }
 
 function cpuAction() {
-  let maxFlipped = 0;
+  let maxScore = -Infinity;
   let bestMoves = [];
 
   for (let c = 0; c < BOARD_SIZE; c++) {
     for (let r = 0; r < BOARD_SIZE; r++) {
-      const count = getAllFlippable(c, r, WHITE, BLACK).length;
-      if (count > 0) {
-        if (count > maxFlipped) {
-          maxFlipped = count;
+      const flippable = getAllFlippable(c, r, WHITE, BLACK);
+      if (flippable.length > 0) {
+        // スコア計算: 置くマスの価値 + ひっくり返すマスの価値の合計
+        let currentScore = WEIGHT_TABLE[c][r];
+        flippable.forEach(([fc, fr]) => {
+          currentScore += WEIGHT_TABLE[fc][fr] * 0.2; // ひっくり返すマスの価値は少し控えめに加算
+        });
+
+        if (currentScore > maxScore) {
+          maxScore = currentScore;
           bestMoves = [[c, r]];
-        } else if (count === maxFlipped) {
+        } else if (currentScore === maxScore) {
           bestMoves.push([c, r]);
         }
       }
